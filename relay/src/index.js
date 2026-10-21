@@ -109,7 +109,9 @@ export default {
 
       const upstream = await fetch(env.GITHUB_TOKEN_URL || TOKEN, {
         method: "POST",
-        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        // GitHub refuses requests without a User-Agent (returns an HTML 403),
+        // and Workers send none by default.
+        headers: { "Content-Type": "application/json", Accept: "application/json", "User-Agent": "retro-relay" },
         body: JSON.stringify({
           client_id: env.GITHUB_CLIENT_ID,
           client_secret: env.GITHUB_CLIENT_SECRET,
@@ -117,9 +119,16 @@ export default {
           redirect_uri,
         }),
       });
-      const data = await upstream.json().catch(() => ({}));
+      const raw = await upstream.text();
+      let data = {};
+      try {
+        data = JSON.parse(raw);
+      } catch {
+        /* not JSON: surfaced below */
+      }
       if (!upstream.ok || data.error || !data.access_token) {
-        return json(400, { message: data.error_description || data.error || "GitHub refused the code." }, origin);
+        const detail = data.error_description || data.error || `GitHub answered ${upstream.status}: ${raw.slice(0, 200)}`;
+        return json(400, { message: detail }, origin);
       }
       // Only the token goes back. Scope/type are informational.
       return json(200, { access_token: data.access_token, scope: data.scope, token_type: data.token_type }, origin);

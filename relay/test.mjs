@@ -42,6 +42,7 @@ assert.equal(redirectAllowed("not a url", env), false);
 // /auth/exchange: mock GitHub's token endpoint via GITHUB_TOKEN_URL + a fetch stub
 {
   const realFetch = globalThis.fetch;
+
   let seen;
   globalThis.fetch = async (url, init) => {
     seen = { url, body: JSON.parse(init.body) };
@@ -65,6 +66,32 @@ assert.equal(redirectAllowed("not a url", env), false);
     assert.equal(seen.url, "https://mock/token");
     assert.equal(seen.body.client_secret, "secret");
     assert.equal(res.headers.get("Access-Control-Allow-Origin"), "https://mywebsiteparticipants.github.io");
+  } finally {
+    globalThis.fetch = realFetch;
+  }
+}
+
+// A non-JSON upstream reply (e.g. GitHub's HTML 403 for a missing User-Agent) is surfaced, not swallowed
+{
+  const realFetch = globalThis.fetch;
+  let ua;
+  globalThis.fetch = async (_url, init) => {
+    ua = init.headers["User-Agent"];
+    return new Response("<html>Request forbidden by administrative rules.</html>", { status: 403 });
+  };
+  try {
+    const res = await worker.fetch(
+      new Request("https://relay/auth/exchange", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Origin: "https://mywebsiteparticipants.github.io" },
+        body: JSON.stringify({ code: "c0de", redirect_uri: "https://mywebsiteparticipants.github.io/Retro/" }),
+      }),
+      env,
+    );
+    assert.equal(res.status, 400);
+    const data = await res.json();
+    assert.match(data.message, /GitHub answered 403: <html>/);
+    assert.equal(ua, "retro-relay");
   } finally {
     globalThis.fetch = realFetch;
   }
