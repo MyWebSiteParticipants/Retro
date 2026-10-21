@@ -1,0 +1,28 @@
+name: Feature / user story
+description: Suggest a new feature
+title: "[Feature]: "
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: user-story
+    attributes:
+      label: "As a ... I want ... so that ..."
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance-criteria
+    attributes:
+      label: Acceptance criteria (checklist)
+      value: "- [ ] "
+    validations:
+      required: true
+  - type: dropdown
+    id: size
+    attributes:
+      label: Size
+      options:
+        - Small (S)
+        - Medium (M)
+        - Large (L)
+    validations:
+      required: true

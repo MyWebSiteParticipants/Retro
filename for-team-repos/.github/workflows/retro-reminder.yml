@@ -1,0 +1,52 @@
+# When a sprint release is tagged (v0.8, v0.9, …), open the sprint's retro
+# issue automatically with the merged-PR list as discussion fuel. The team
+# then either fills the issue in (fallback) or opens the same sprint in the
+# Retro app and links it from here.
+
+name: Open sprint retro
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      sprint:
+        description: "Sprint name, e.g. Sprint 3"
+        required: true
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: read
+
+jobs:
+  open-retro:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/github-script@v7
+        with:
+          script: |
+            const tag = context.ref.replace("refs/tags/", "");
+            const sprint = context.payload.inputs?.sprint
+              || `Sprint ${Number(tag.replace(/^v\d+\./, "")) - 7}`; // v0.8 → Sprint 1 … v0.12 → Sprint 5
+            // Merged PRs since the previous tag (best effort: last 14 days).
+            const since = new Date(Date.now() - 14 * 864e5).toISOString();
+            const q = `repo:${context.repo.owner}/${context.repo.repo} is:pr is:merged merged:>=${since}`;
+            const prs = await github.rest.search.issuesAndPullRequests({ q, per_page: 100 });
+            const list = prs.data.items.map(p => `- #${p.number} ${p.title} (@${p.user.login})`).join("\n") || "- (none found)";
+            const body = [
+              `Sprint release: \`${tag}\``,
+              "",
+              "## Merged this sprint",
+              list,
+              "",
+              "## Retro",
+              `Open **${sprint}** in the Retro app: https://mywebsiteparticipants.github.io/Retro/ and paste the Discussion link here —`,
+              "or run the retro in this issue using the headings below.",
+              "",
+              "### What went well\n- \n\n### What didn't go well\n- \n\n### Puzzles\n- \n\n### Action items (max 3, each → its own `retro-action` issue with an owner)\n- [ ] ",
+            ].join("\n");
+            await github.rest.issues.create({
+              owner: context.repo.owner, repo: context.repo.repo,
+              title: `Retro — ${sprint}`, body, labels: ["retro"],
+            });

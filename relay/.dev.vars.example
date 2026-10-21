@@ -1,0 +1,4 @@
+# Copy to .dev.vars (git-ignored) for `npm run dev`. Use a SEPARATE OAuth App
+# for dev whose callback URL is http://localhost:5173/Retro/
+GITHUB_CLIENT_ID=
+GITHUB_CLIENT_SECRET=

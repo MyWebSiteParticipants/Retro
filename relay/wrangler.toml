@@ -1,0 +1,23 @@
+# Retro relay — Cloudflare Worker. See src/index.js for what it does.
+#
+# One-time setup (PowerShell or cmd, from C:\projects\Retro\relay):
+#   npm install
+#   npx wrangler login                          # opens the browser once
+#   npx wrangler deploy                         # prints https://retro-relay.<you>.workers.dev
+#   npx wrangler secret put GITHUB_CLIENT_ID    # from the GitHub OAuth App (see ../SETUP.md)
+#   npx wrangler secret put GITHUB_CLIENT_SECRET
+#
+# Then put the Worker URL in the Retro repo variable VITE_API_BASE
+# (Settings -> Secrets and variables -> Actions -> Variables) and re-run the
+# Pages deploy.
+
+name = "retro-relay"
+main = "src/index.js"
+compatibility_date = "2026-09-01"
+
+[vars]
+# Comma-separated. Trailing ":*" wildcards the port for local dev servers.
+ALLOWED_ORIGINS = "https://mywebsiteparticipants.github.io,https://mikecostarella.github.io,http://localhost:*,http://127.0.0.1:*"
+
+[observability]
+enabled = true

@@ -1,0 +1,30 @@
+name: Sprint retrospective
+description: Fallback retro when the Retro app isn't used — one issue per sprint, action items become their own issues
+title: "Retro — Sprint "
+labels: ["retro"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Timebox 30–45 min. Start by reviewing last sprint's `retro-action` issues.
+        Each action item below becomes its own issue labelled `retro-action`, assigned to one owner, in the next sprint's column.
+  - type: textarea
+    id: went-well
+    attributes:
+      label: What went well
+      value: "- "
+  - type: textarea
+    id: didnt-go-well
+    attributes:
+      label: What didn't go well
+      value: "- "
+  - type: textarea
+    id: puzzles
+    attributes:
+      label: Puzzles / questions
+      value: "- "
+  - type: textarea
+    id: actions
+    attributes:
+      label: Action items (max 3, each with an owner — then open as issues)
+      value: "- [ ] … — @owner"
